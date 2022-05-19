@@ -95,6 +95,10 @@ let drawTemperature = function(geojson) {
             <strong>${geoJsonPoint.properties.name}</strong> (${geoJsonPoint.geometry.coordinates[2]}m)
             `;
             //Erstellung von Marker
+            let color = getColor(
+                geoJsonPoint.properties.LT,
+                COLORS.temperature
+            )
             return L.marker(latlng, {
                 icon: L.divIcon({
                     className: "aws-div-icon",
