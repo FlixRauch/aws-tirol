@@ -55,6 +55,14 @@ L.control.fullscreen().addTo(map);
 // Wetterstationslayer beim Laden anzeigen
 overlays.temperature.addTo(map);
 
+let getColor = function(value,ramp) {
+    for (let rule of ramp){
+        if(value >= rule.min && value < rule.max) {
+            return rule.color
+        }
+    }
+}
+
 let drawStations = function(geojson) {
     L.geoJSON(geojson, {
         pointToLayer: function (geoJsonPoint, latlng) {
@@ -90,7 +98,7 @@ let drawTemperature = function(geojson) {
             return L.marker(latlng, {
                 icon: L.divIcon({
                     className: "aws-div-icon",
-                    html: `<span>${geoJsonPoint.properties.LT}</span>`
+                    html: `<span>${geoJsonPoint.properties.LT.toFixed(1)}</span>`
                 })
             }).bindPopup(popup);
         }
