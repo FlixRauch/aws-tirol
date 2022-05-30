@@ -15,7 +15,7 @@ let startLayer = L.tileLayer("https://static.avalanche.report/tms/{z}/{x}/{y}.we
 let overlays = {
     stations: L.featureGroup(),
     temperature: L.featureGroup(),
-    precipitation: L.featureGroup(),
+    humidity: L.featureGroup(),
     snowheight: L.featureGroup(),
     wind: L.featureGroup(),
 };
@@ -36,7 +36,7 @@ let layerControl = L.control.layers({
 }, {
     "Wetterstationen": overlays.stations,
     "Temperatur": overlays.temperature,
-    "Niederschlag": overlays.precipitation,
+    "Relative Luftfeuchte": overlays.humidity,
     "Schneehöhe": overlays.snowheight,
     "Wind": overlays.wind
 }).addTo(map);
@@ -110,6 +110,92 @@ let drawTemperature = function(geojson) {
     }).addTo(overlays.temperature);//Marker und Popup zu Objekt mit Stations hinzufügen
 }
 
+let drawSnowheight = function(geojson) {
+    L.geoJSON(geojson, {
+        filter: function(geoJsonPoint) {
+            if (geoJsonPoint.properties.HS >0 && geoJsonPoint.properties.HS < 1000) {
+                return true 
+            }
+        },
+        pointToLayer: function (geoJsonPoint, latlng) {
+            //Popup erstellen
+            let popup = `
+            <strong>${geoJsonPoint.properties.name}</strong> (${geoJsonPoint.geometry.coordinates[2]}m)
+            `;
+            //Erstellung von Marker
+            let color = getColor(
+                geoJsonPoint.properties.HS,
+                COLORS.snowheight
+            )
+            
+            return L.marker(latlng, {
+                icon: L.divIcon({
+                    className: "aws-div-icon",
+                    html: `<span style="background-color:${color}">${geoJsonPoint.properties.HS.toFixed(1)}</span>`
+                })
+            }).bindPopup(popup);
+        }
+    }).addTo(overlays.snowheight);//Marker und Popup zu Objekt mit Stations hinzufügen
+}
+
+let drawWind = function(geojson) {
+    L.geoJSON(geojson, {
+        filter: function(geoJsonPoint) {
+            if (geoJsonPoint.properties.WG >0 && geoJsonPoint.properties.WG < 300 && geoJsonPoint.properties.WR <= 360) {
+                return true 
+            }
+        },
+        pointToLayer: function (geoJsonPoint, latlng) {
+            //Popup erstellen
+            let popup = `
+            <strong>${geoJsonPoint.properties.name}</strong> (${geoJsonPoint.geometry.coordinates[2]}m)
+            `;
+            //Erstellung von Marker
+            let color = getColor(
+                geoJsonPoint.properties.WG,
+                COLORS.windSpeed
+            )
+            
+            let deg = geoJsonPoint.properties.WR
+
+            return L.marker(latlng, {
+                icon: L.divIcon({
+                    className: "aws-div-icon",
+                    html: `<span style="background-color:${color}; transform: rotate(${deg}deg)"><i class="fa-solid fa-circle-arrow-up"></i>${geoJsonPoint.properties.WG.toFixed(1)}</span>`
+                })
+            }).bindPopup(popup);
+        }
+    }).addTo(overlays.wind);//Marker und Popup zu Objekt mit Stations hinzufügen
+}
+
+let drawHumidity = function(geojson) {
+    L.geoJSON(geojson, {
+        filter: function(geoJsonPoint) {
+            if (geoJsonPoint.properties.RH >0 && geoJsonPoint.properties.RH < 101) {
+                return true 
+            }
+        },
+        pointToLayer: function (geoJsonPoint, latlng) {
+            //Popup erstellen
+            let popup = `
+            <strong>${geoJsonPoint.properties.name}</strong> (${geoJsonPoint.geometry.coordinates[2]}m)
+            `;
+            //Erstellung von Marker
+            let color = getColor(
+                geoJsonPoint.properties.RH,
+                COLORS.humidity
+            )
+            
+            return L.marker(latlng, {
+                icon: L.divIcon({
+                    className: "aws-div-icon",
+                    html: `<span style="background-color:${color}">${geoJsonPoint.properties.RH.toFixed(1)}</span>`
+                })
+            }).bindPopup(popup);
+        }
+    }).addTo(overlays.humidity);//Marker und Popup zu Objekt mit Stations hinzufügen
+}
+
 // Wetterstationen
 async function loadData(url) {
     let response = await fetch(url);
@@ -117,6 +203,9 @@ async function loadData(url) {
     
     drawStations(geojson);
     drawTemperature(geojson);
+    drawSnowheight(geojson);
+    drawWind(geojson);
+    drawHumidity(geojson);
     
 }
 
